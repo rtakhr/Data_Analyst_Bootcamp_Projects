@@ -96,6 +96,30 @@ Select *, (VaccinationsOverTime/Population)*100
 From PopvsVac
 
 
+--Temp Table option
+DROP Table if exists #VaccinatedPopulation
+Create Table #VaccinatedPopulation
+(
+Continent nvarchar(255),
+Location nvarchar(255),
+Date datetime,
+Population numeric,
+New_vaccinations numeric,
+VaccinationsOverTime numeric
+)
+
+Insert into #VaccinatedPopulation
+Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
+, SUM(CONVERT(int,vac.new_vaccinations)) OVER (Partition by dea.Location Order by dea.location, dea.Date) as VaccinationsOverTime
+From PortfolioProject..CovidDeaths dea
+Join PortfolioProject..CovidVaccinations vac
+	On dea.location = vac.location
+	and dea.date = vac.date
+
+Select *, (VaccinationsOverTime/Population)*100
+From #VaccinatedPopulation
+
+
 --Creatieng view to store data for later visualizations
 Create view PopvsVac as
 Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, SUM(cast(vac.new_vaccinations as int)) 
